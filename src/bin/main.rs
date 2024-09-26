@@ -27,6 +27,7 @@ const DEFAULT_UCI_PORT: u16 = 7000;
 async fn accept_incoming(cmd_tx: mpsc::Sender<PicaCommand>, uci_port: u16) -> Result<()> {
     let uci_socket = SocketAddrV4::new(Ipv4Addr::LOCALHOST, uci_port);
     let uci_listener = TcpListener::bind(uci_socket).await?;
+    log::info!("? main");
     log::info!("Pica: Listening on: {}", uci_port);
 
     loop {
@@ -74,8 +75,9 @@ impl pica::RangingEstimator for MockRangingEstimator {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
 
+    env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
+    log::info!("bin main");
     let args = Args::parse();
 
     let pica = Pica::new(Box::new(MockRangingEstimator()), args.pcapng_dir);

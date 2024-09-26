@@ -550,6 +550,7 @@ impl Pica {
         let Some(mut command_rx) = self.command_rx.take() else {
             anyhow::bail!("missing pica command receiver")
         };
+        log::info!("pica.run");
         loop {
             if let Some(command) = command_rx.recv().await {
                 self.pica_command(command)

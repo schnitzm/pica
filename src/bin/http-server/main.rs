@@ -28,6 +28,7 @@ use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc, oneshot};
 use tokio::try_join;
 use tokio_stream::{wrappers::BroadcastStream, StreamExt};
+use env_logger::Env;
 
 use pica::{Category, MacAddress, Pica, PicaCommand, PicaCommandError, PicaEvent};
 
@@ -476,7 +477,8 @@ async fn http_request(
 }
 
 async fn serve(context: Context, tx: mpsc::Sender<PicaCommand>, web_port: u16) -> Result<()> {
-    let addr = SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, web_port);
+    let ip_addr = Ipv4Addr::new(127, 0, 0, 1) ;
+    let addr = SocketAddrV4::new(ip_addr, web_port); //Ipv4Addr::UNSPECIFIED
     let make_svc = make_service_fn(move |_conn| {
         let tx = tx.clone();
         let local_context = context.clone();
@@ -489,7 +491,7 @@ async fn serve(context: Context, tx: mpsc::Sender<PicaCommand>, web_port: u16) -
 
     let server = Server::bind(&addr.into()).serve(make_svc);
 
-    log::info!("Pica: Web server started on http://0.0.0.0:{}", web_port);
+    log::info!("Pica: Web server started on http://{}:{}", ip_addr,web_port);
 
     server.await?;
     Ok(())
@@ -532,7 +534,11 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+
+    env_logger::Builder::from_env(Env::default().default_filter_or("debug")).init();
+    log::info!("http-server main");
     let args = Args::parse();
+    
     assert_ne!(
         args.uci_port, args.web_port,
         "UCI port and WEB port must be different."
@@ -550,6 +556,6 @@ async fn main() -> Result<()> {
         serve(context.clone(), cmd_tx.clone(), args.web_port),
         context.handle_connection_events(events_rx),
     )?;
-
+    log::info!("http-server main after try_join!");
     Ok(())
 }
